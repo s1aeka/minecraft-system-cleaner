@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#171717">
+  <title>MINECRAFT // SYSTEM OVERVIEW</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #171717;
+      --panel: #282828;
+      --panel-light: #3b3b3b;
+      --panel-dark: #1e1e1e;
+      --border: #101010;
+      --white: #eeeeee;
+      --muted: #b7b7b7;
+      --green: #55bd38;
+      --green-dark: #287522;
+      --gold: #f3c735;
+      --red: #c93630;
+      --pixel: "Press Start 2P", "Courier New", monospace;
+      --body: "VT323", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 790px;
+      min-height: 100vh;
+      color: var(--white);
+      font-family: var(--body);
+      font-size: 21px;
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(45deg, #1c1c1c 25%, transparent 25%),
+        linear-gradient(-45deg, #1c1c1c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1c1c1c 75%),
+        linear-gradient(-45deg, transparent 75%, #1c1c1c 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    }
+
+    button { font: inherit; color: inherit; }
+
+    .shell {
+      width: min(1160px, calc(100% - 36px));
+      margin: 18px auto;
+      border: 4px solid #080808;
+      background: #252525;
+      box-shadow: 0 0 0 4px #555, 0 12px 0 #080808, 0 22px 45px #000b;
+      padding: 14px;
+    }
+
+    .topbar {
+      min-height: 75px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border: 3px solid #0e0e0e;
+      background:
+        linear-gradient(90deg, #353535 0 25%, #303030 25% 50%, #353535 50% 75%, #303030 75%);
+      background-size: 24px 24px;
+      box-shadow: inset 3px 3px #686868, inset -3px -3px #181818;
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-icon {
+      width: 48px; height: 48px; display: grid; place-items: center;
+      background: #427a2b; border: 3px solid #101010;
+      box-shadow: inset 3px 3px #79b34a, inset -3px -3px #264c20;
+      font-size: 29px;
+    }
+    h1 {
+      margin: 0; font: 12px/1.9 var(--pixel); letter-spacing: -1px;
+      text-shadow: 2px 2px #111;
+    }
+    .subtitle { margin-top: 5px; color: #c7c7c7; font-size: 20px; }
+    .status-chip {
+      border: 2px solid #111; padding: 7px 10px; color: #bdf498;
+      background: #234421; box-shadow: inset 2px 2px #47703e, 3px 3px #101010;
+      font: 8px/1.7 var(--pixel); white-space: nowrap;
+    }
+    .status-chip::before { content: "■ "; color: #7cff55; }
+
+    .tabs {
+      display: flex; gap: 8px; border-bottom: 4px solid #101010;
+      margin-bottom: 16px; padding: 0 4px;
+    }
+    .tab-button {
+      position: relative; top: 0; cursor: pointer; border: 3px solid #111;
+      border-bottom: 0; padding: 12px 14px 10px;
+      background: #3b3b3b; color: #c7c7c7;
+      box-shadow: inset 2px 2px #686868;
+      font: 8px/1.8 var(--pixel);
+      transition: transform .08s, filter .08s;
+    }
+    .tab-button:hover { filter: brightness(1.2); }
+    .tab-button.active {
+      top: 3px; background: #555; color: #fff;
+      box-shadow: inset 2px 2px #898989, inset -2px -2px #292929;
+    }
+    .page { display: none; min-height: 570px; }
+    .page.active { display: block; }
+
+    .voxel-card {
+      position: relative; border: 3px solid #111; background: var(--panel);
+      box-shadow: inset 3px 3px #565656, inset -3px -3px #191919, 4px 4px #0a0a0a;
+      padding: 15px; image-rendering: pixelated;
+    }
+    .section-title {
+      margin: 0 0 14px; font: 9px/1.9 var(--pixel); color: #f0d775;
+      text-shadow: 2px 2px #161616;
+    }
+
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 13px;
+    }
+    .metric-card { min-height: 133px; }
+    .metric-head { display: flex; align-items: center; justify-content: space-between; }
+    .metric-name { font: 9px/1.8 var(--pixel); color: #ddd; }
+    .metric-value { margin: 13px 0 3px; font-size: 34px; line-height: 1; color: #fff; }
+    .metric-detail { color: #bcbcbc; font-size: 20px; }
+    .meter-caption { color: #aaa; font-size: 17px; margin: 7px 0 3px; }
+    .meter { min-height: 21px; display: flex; align-items: center; gap: 3px; overflow: hidden; }
+    .meter-cell {
+      width: 11px; height: 16px; flex: 0 0 11px;
+      background: #484848; border: 2px solid #151515;
+      box-shadow: inset 1px 1px #6d6d6d;
+    }
+    .meter-cell.on.green { background: var(--green); box-shadow: inset 1px 1px #a5f175; }
+    .meter-cell.on.gold { background: var(--gold); box-shadow: inset 1px 1px #fff18a; }
+    .meter-cell.on.red { background: var(--red); box-shadow: inset 1px 1px #f77a69; }
+    .critical .metric-value { color: #ff746b; }
+    .mini-note { font-size: 17px; color: #c7c7c7; margin-top: 7px; }
+    .potion-row {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 12px 5px 0; padding: 10px;
+      border: 2px solid #111; background: #242424;
+      box-shadow: inset 2px 2px #505050;
+    }
+    .potion-button {
+      min-height: 42px;
+      background: repeating-linear-gradient(90deg, #7d36c2 0 12px, #6a2da9 12px 16px);
+      box-shadow: inset 3px 3px #c18aff, inset -3px -3px #42156f, 4px 4px #0a0a0a;
+    }
+    .potion-button:hover { filter: brightness(1.2); }
+    .potion-button:disabled { opacity: .6; cursor: wait; }
+    #ram-value { transition: color .2s, transform .2s, text-shadow .2s; }
+    #ram-value.flush-pop {
+      color: #bdff75;
+      transform: scale(1.12);
+      text-shadow: 0 0 12px #80ff45;
+      animation: potion-glow .8s steps(2, start) 3;
+    }
+    #ram-hp-meter.flush-pulse .meter-cell.on {
+      animation: hp-pulse .45s steps(2, start) 4;
+    }
+    @keyframes potion-glow {
+      50% { color: #fff; text-shadow: 0 0 18px #a4ff58; }
+    }
+    @keyframes hp-pulse {
+      50% { filter: brightness(1.8); transform: translateY(-2px); }
+    }
+
+    .world-layout {
+      margin-top: 17px;
+      display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .8fr);
+      gap: 14px; min-height: 350px;
+    }
+    .world-card { min-height: 350px; overflow: hidden; padding: 0; }
+    .world-heading {
+      position: absolute; z-index: 2; left: 14px; top: 12px;
+      font: 8px/1.8 var(--pixel); color: #f5efce;
+      text-shadow: 2px 2px #111;
+      pointer-events: none;
+    }
+    #world-canvas { width: 100%; height: 100%; min-height: 345px; display: block; cursor: grab; }
+    #world-canvas:active { cursor: grabbing; }
+    .world-tip {
+      position: absolute; z-index: 2; bottom: 9px; left: 12px;
+      font-size: 17px; color: #eee; text-shadow: 2px 2px #111; pointer-events: none;
+    }
+    #high-load-overlay {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      opacity: 0; background: radial-gradient(ellipse, transparent 35%, #f22a153d 100%);
+      transition: opacity .2s;
+    }
+    .world-card.hot #high-load-overlay { opacity: 1; }
+    .right-stack { display: flex; flex-direction: column; gap: 14px; }
+    .resource-card { flex: 1; }
+    .resource-card .section-title { margin-bottom: 10px; }
+    .bar-label { display: flex; justify-content: space-between; color: #eee; font-size: 20px; margin: 7px 0 2px; }
+    .xp-meter .meter-cell { width: 13px; flex-basis: 13px; height: 13px; }
+    .hp-meter .meter-cell { width: 13px; flex-basis: 13px; height: 13px; }
+    .system-foot {
+      display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      margin-top: 13px; padding: 9px 12px; border: 2px solid #111;
+      background: #202020; color: #c9c9c9; font-size: 18px;
+    }
+
+    .process-toolbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      margin-bottom: 13px;
+    }
+    .process-toolbar .section-title { margin: 0; }
+    .process-list { display: grid; gap: 7px; }
+    .process-row {
+      display: grid; grid-template-columns: 38px minmax(120px, 1fr) 75px 110px 112px;
+      align-items: center; gap: 10px; min-height: 46px; padding: 5px 11px;
+      background: #353535; border: 2px solid #151515;
+      box-shadow: inset 2px 2px #565656, inset -2px -2px #242424;
+    }
+    .mob-icon { font-size: 24px; text-align: center; }
+    .mob-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f2f2f2; }
+    .mob-id, .mob-memory { color: #c4c4c4; text-align: right; }
+    .mob-memory { color: #f1d870; }
+    .kill-button {
+      padding: 6px 8px;
+      border: 2px solid #111;
+      background: #9b2925;
+      box-shadow: inset 2px 2px #e46a5e, inset -2px -2px #5d1715, 2px 2px #101010;
+      color: #fff;
+      font: 7px/1.8 var(--pixel);
+      cursor: pointer;
+    }
+    .kill-button:hover { filter: brightness(1.2); }
+    .kill-button:active { transform: translate(2px, 2px); box-shadow: inset 2px 2px #5d1715; }
+    .kill-button:disabled { opacity: .55; cursor: wait; }
+    .empty-state { padding: 30px; text-align: center; color: #bbb; }
+
+    .cleanup-layout { display: grid; grid-template-columns: minmax(240px, .7fr) 1.3fr; gap: 14px; height: 550px; }
+    .cleanup-options { display: flex; flex-direction: column; gap: 13px; }
+    .switch-row {
+      display: flex; align-items: center; gap: 11px; cursor: pointer;
+      padding: 11px; border: 2px solid #111; background: #383838;
+      box-shadow: inset 2px 2px #5e5e5e;
+    }
+    .switch-row input { appearance: none; width: 32px; height: 17px; margin: 0; flex: 0 0 auto; border: 2px solid #111; background: #242424; position: relative; }
+    .switch-row input::after { content: ""; position: absolute; width: 11px; height: 11px; left: 1px; top: 1px; background: #aaa; }
+    .switch-row input:checked { background: #286927; }
+    .switch-row input:checked::after { left: 16px; background: #a6ed72; }
+    .switch-label { line-height: 1.1; }
+    .warning { color: #e2c878; font-size: 18px; line-height: 1.05; }
+    .pixel-button {
+      border: 3px solid #111; cursor: pointer; padding: 11px 15px;
+      background: #555; color: white;
+      box-shadow: inset 3px 3px #888, inset -3px -3px #303030, 4px 4px #0b0b0b;
+      text-shadow: 1px 2px #111; font: 8px/1.8 var(--pixel);
+      transition: transform .07s, box-shadow .07s, filter .07s;
+    }
+    .pixel-button:hover { filter: brightness(1.13); }
+    .pixel-button:active { transform: translate(3px, 3px); box-shadow: inset 3px 3px #333; }
+    .pixel-button:disabled { opacity: .55; cursor: wait; }
+    .tnt-button {
+      position: relative; margin-top: auto; min-height: 88px;
+      background: repeating-linear-gradient(0deg, #d9362b 0 9px, #b32420 9px 12px);
+      box-shadow: inset 3px 3px #ff7767, inset -3px -3px #781713, 5px 5px #080808;
+    }
+    .tnt-label {
+      display: inline-block; padding: 5px 9px; color: #171717; background: #eee;
+      text-shadow: none; border: 2px solid #181818; font: 12px var(--pixel);
+    }
+    .log-panel { display: flex; flex-direction: column; min-height: 0; }
+    .log-panel .section-title { margin-bottom: 10px; }
+    #clean-log {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 12px;
+      border: 3px solid #101010; background: #111713;
+      box-shadow: inset 3px 3px #080b09;
+      color: #b7f4a0; font-size: 18px; line-height: 1.05;
+      overflow-wrap: anywhere; white-space: pre-wrap;
+    }
+    .log-line { display: block; margin: 0 0 3px; }
+    .log-line.error { color: #ff8077; }
+    .log-line.path { color: #e6d58c; }
+    .log-line.summary { color: #9ce1ff; }
+    .blink { animation: blink 1.1s steps(2, start) infinite; }
+    @keyframes blink { to { visibility: hidden; } }
+
+    .footer {
+      margin-top: 15px; padding: 8px 10px; color: #898989; text-align: center;
+      font-size: 16px; border-top: 2px solid #151515;
+    }
+    @media (max-width: 900px) {
+      .shell { width: calc(100% - 20px); padding: 10px; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .disk-card { grid-column: 1 / -1; }
+      .world-layout { grid-template-columns: 1fr; }
+      .world-card { min-height: 300px; }
+      .right-stack { display: grid; grid-template-columns: 1fr 1fr; }
+      .cleanup-layout { grid-template-columns: 1fr; height: auto; }
+      .log-panel { min-height: 300px; }
+      .tnt-button { margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">⛏</div>
+        <div>
+          <h1>MINECRAFT // SYSTEM OVERVIEW</h1>
+          <div class="subtitle">Монитор мира: ваш компьютер</div>
+        </div>
+      </div>
+      <div class="status-chip" id="connection-state">ЗАГРУЗКА МИРА</div>
+    </header>
+
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab-button active" data-page="dashboard">⚔️ СОСТОЯНИЕ ПК</button>
+      <button class="tab-button" data-page="processes">📜 МОБЫ / ПРОЦЕССЫ</button>
+      <button class="tab-button" data-page="cleanup">🧨 ДИНАМИТ / ОЧИСТКА</button>
+    </nav>
+
+    <section class="page active" id="page-dashboard">
+      <div class="metrics-grid">
+        <article class="voxel-card metric-card" id="cpu-card">
+          <div class="metric-head"><span class="metric-name">ЦП / CPU</span><span>⚙</span></div>
+          <div class="metric-value" id="cpu-value">--%</div>
+          <div class="meter-caption">Нагрузка процессора</div>
+          <div class="meter" id="cpu-meter" aria-label="Загрузка CPU"></div>
+        </article>
+        <article class="voxel-card metric-card" id="ram-card">
+          <div class="metric-head"><span class="metric-name">ОЗУ / RAM</span><span>♥</span></div>
+          <div class="metric-value" id="ram-value">--%</div>
+          <div class="meter-caption" id="ram-detail">Память игрока</div>
+          <div class="meter hp-meter" id="ram-meter" aria-label="Использование RAM"></div>
+        </article>
+        <article class="voxel-card metric-card" id="disk-card">
+          <div class="metric-head"><span class="metric-name">МИР / ДИСК C:</span><span>▣</span></div>
+          <div class="metric-value" id="disk-value">-- ГБ свободно</div>
+          <div class="meter-caption" id="disk-detail">Загрузка чанка...</div>
+          <div class="meter xp-meter" id="disk-meter" aria-label="Использование диска"></div>
+        </article>
+      </div>
+      <div class="potion-row">
+        <button class="pixel-button potion-button" id="flush-ram-button">🧪 ЗЕЛЬЕ УСКОРЕНИЯ (ОЧИСТКА ОЗУ)</button>
+        <span class="mini-note" id="flush-ram-status">Сокращает working set только этого приложения.</span>
+      </div>
+
+      <div class="world-layout">
+        <article class="voxel-card world-card" id="world-card">
+          <div class="world-heading">БЛОК НАГРУЗКИ // DRAG TO ROTATE</div>
+          <div id="high-load-overlay"></div>
+          <canvas id="world-canvas" aria-label="Вращающийся 3D блок травы"></canvas>
+          <div class="world-tip" id="cube-tip">Загрузка 3D мира...</div>
+        </article>
+        <div class="right-stack">
+          <article class="voxel-card resource-card">
+            <h2 class="section-title">♥ HP // ПАМЯТЬ</h2>
+            <div class="bar-label"><span>RAM игрока</span><strong id="ram-hp-text">--%</strong></div>
+            <div class="meter hp-meter" id="ram-hp-meter"></div>
+            <div class="mini-note" id="ram-size">Ожидание данных...</div>
+          </article>
+          <article class="voxel-card resource-card">
+            <h2 class="section-title">✦ XP // ХРАНИЛИЩЕ</h2>
+            <div class="bar-label"><span>Диск C:</span><strong id="disk-xp-text">--%</strong></div>
+            <div class="meter xp-meter" id="disk-xp-meter"></div>
+            <div class="mini-note" id="battery-status">Батарея: проверка...</div>
+          </article>
+          <article class="voxel-card resource-card">
+            <h2 class="section-title">МИРОВОЙ СТАТУС</h2>
+            <div class="mini-note" id="world-status">Загрузка показателей...</div>
+          </article>
+        </div>
+      </div>
+      <div class="system-foot">
+        <span>Автообновление: <b>1 сек</b></span>
+        <span>История CPU/RAM: <b>30 тиков</b></span>
+        <span id="last-update">Последний тик: --:--:--</span>
+      </div>
+    </section>
+
+    <section class="page" id="page-processes">
+      <div class="process-toolbar">
+        <h2 class="section-title">📜 МОБЫ, ПОТРЕБЛЯЮЩИЕ РЕСУРСЫ</h2>
+        <button class="pixel-button" id="refresh-processes">🔄 ОБНОВИТЬ СПИСОК</button>
+      </div>
+      <article class="voxel-card">
+        <div class="process-list" id="process-list">
+          <div class="empty-state">Сканирование мира...</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="page" id="page-cleanup">
+      <div class="cleanup-layout">
+        <section class="voxel-card cleanup-options">
+          <h2 class="section-title">🧰 ВЫБЕРИ ДЕЙСТВИЕ</h2>
+          <label class="switch-row">
+            <input id="clean-temp" type="checkbox" checked>
+            <span class="switch-label">Временные файлы<br><small>Temp-папки игрока и системы</small></span>
+          </label>
+          <label class="switch-row">
+            <input id="clean-bin" type="checkbox">
+            <span class="switch-label">Очистить Корзину<br><small>Удалить предметы навсегда</small></span>
+          </label>
+          <div class="warning">Внимание: очистка удаляет файлы. Заблокированные системой файлы будут пропущены.</div>
+          <button class="pixel-button tnt-button" id="clean-button">
+            <span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ
+          </button>
+        </section>
+        <section class="voxel-card log-panel">
+          <h2 class="section-title">📟 ЛОГ ПРИКЛЮЧЕНИЯ</h2>
+          <div id="clean-log" role="log" aria-live="polite"><span class="log-line">[СИСТЕМА] Жду команду игрока<span class="blink">_</span></span></div>
+        </section>
+      </div>
+    </section>
+
+    <footer class="footer">PIXEL SYSTEM CONSOLE // МОНИТОРИНГ И ОБСЛУЖИВАНИЕ ПК</footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    const PIXEL_COUNT = 20;
+    let latestCpu = 0;
+    let latestRam = 0;
+    let latestDisk = 0;
+    let bridgeReady = false;
+    let cleanupPolling = false;
+    const cleanupDisplayQueue = [];
+    let cleanupTyping = false;
+
+    document.querySelectorAll(".tab-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(`page-${button.dataset.page}`).classList.add("active");
+      });
+    });
+
+    function makeMeter(elementId, count = PIXEL_COUNT) {
+      const meter = document.getElementById(elementId);
+      meter.replaceChildren();
+      for (let index = 0; index < count; index += 1) {
+        const cell = document.createElement("span");
+        cell.className = "meter-cell";
+        meter.appendChild(cell);
+      }
+    }
+
+    ["cpu-meter", "ram-meter", "disk-meter", "ram-hp-meter", "disk-xp-meter"]
+      .forEach((id) => makeMeter(id));
+
+    function drawMeter(elementId, percentage, color = "green") {
+      const meter = document.getElementById(elementId);
+      const cells = meter.querySelectorAll(".meter-cell");
+      const filled = Math.max(0, Math.min(cells.length, Math.round((percentage / 100) * cells.length)));
+      cells.forEach((cell, index) => {
+        cell.className = `meter-cell${index < filled ? ` on ${percentage > 85 ? "red" : color}` : ""}`;
+      });
+    }
+
+    function setText(id, text) {
+      document.getElementById(id).textContent = text;
+    }
+
+    function renderStats(stats) {
+      if (Number.isFinite(stats.cpu_percent)) {
+        latestCpu = Math.max(0, Math.min(100, stats.cpu_percent));
+        setText("cpu-value", `${latestCpu.toFixed(0)}%`);
+        drawMeter("cpu-meter", latestCpu);
+      } else if (stats.cpu_error) {
+        setText("cpu-value", "ERR");
+      }
+
+      if (Number.isFinite(stats.ram_percent)) {
+        latestRam = Math.max(0, Math.min(100, stats.ram_percent));
+        const usedGb = (stats.ram_used / (1024 ** 3)).toFixed(1);
+        const totalGb = (stats.ram_total / (1024 ** 3)).toFixed(1);
+        setText("ram-value", `${latestRam.toFixed(0)}%`);
+        setText("ram-detail", `${usedGb} / ${totalGb} ГБ`);
+        setText("ram-hp-text", `${latestRam.toFixed(0)}%`);
+        setText("ram-size", `Используется ${usedGb} из ${totalGb} ГБ`);
+        drawMeter("ram-meter", latestRam, "red");
+        drawMeter("ram-hp-meter", latestRam, "red");
+      } else if (stats.ram_error) {
+        setText("ram-value", "ERR");
+        setText("ram-size", `Ошибка ОЗУ: ${stats.ram_error}`);
+      }
+
+      if (Number.isFinite(stats.disk_percent)) {
+        latestDisk = Math.max(0, Math.min(100, stats.disk_percent));
+        const usedGb = (stats.disk_used / (1024 ** 3)).toFixed(1);
+        const freeGb = (stats.disk_free / (1024 ** 3)).toFixed(1);
+        const totalGb = (stats.disk_total / (1024 ** 3)).toFixed(1);
+        setText("disk-value", `${freeGb} ГБ свободно`);
+        setText("disk-detail", `Занято ${usedGb} из ${totalGb} ГБ`);
+        setText("disk-xp-text", `${latestDisk.toFixed(0)}%`);
+        drawMeter("disk-meter", latestDisk, "gold");
+        drawMeter("disk-xp-meter", latestDisk, "gold");
+      } else if (stats.disk_error) {
+        setText("disk-value", "ERR");
+        setText("disk-detail", `Ошибка диска: ${stats.disk_error}`);
+      }
+
+      const battery = stats.battery;
+      if (battery) {
+        const power = battery.power_plugged ? "заряжается" : "работает от батареи";
+        setText("battery-status", `Батарея: ${battery.percent}% · ${power}`);
+      } else if (stats.battery_error) {
+        setText("battery-status", `Батарея: ${stats.battery_error}`);
+      } else {
+        setText("battery-status", "Батарея: не обнаружена");
+      }
+
+      const hot = latestCpu > 85 || latestRam > 85;
+      document.getElementById("world-card").classList.toggle("hot", hot);
+      setText("world-status", hot ? "⚠ Высокая нагрузка! Мир перегрет." : "Мир загружен. Система в норме.");
+      setText("last-update", `Последний тик: ${new Date().toLocaleTimeString("ru-RU")}`);
+      updateVoxelBlock(latestCpu, hot);
+    }
+
+    async function refreshStats() {
+      if (!bridgeReady) return;
+      try {
+        const stats = await window.pywebview.api.get_stats();
+        renderStats(stats);
+      } catch (error) {
+        setText("connection-state", "ОШИБКА API");
+        console.error("Не удалось получить метрики:", error);
+      }
+    }
+
+    async function refreshProcesses() {
+      if (!bridgeReady) return;
+      const button = document.getElementById("refresh-processes");
+      const list = document.getElementById("process-list");
+      button.disabled = true;
+      list.innerHTML = '<div class="empty-state">Сканирование мобов...</div>';
+      try {
+        const processes = await window.pywebview.api.get_processes();
+        list.replaceChildren();
+        if (!processes.length) {
+          list.innerHTML = '<div class="empty-state">Процессы не найдены.</div>';
+          return;
+        }
+        processes.forEach((process, index) => {
+          const row = document.createElement("div");
+          row.className = "process-row";
+          const icon = document.createElement("span");
+          icon.className = "mob-icon";
+          icon.textContent = ["🧟", "🐷", "🕷️", "🐺", "🐸"][index % 5];
+          const name = document.createElement("span");
+          name.className = "mob-name";
+          name.textContent = process.name;
+          name.title = process.name;
+          const pid = document.createElement("span");
+          pid.className = "mob-id";
+          pid.textContent = `#${process.pid}`;
+          const memory = document.createElement("span");
+          memory.className = "mob-memory";
+          memory.textContent = `${Number(process.memory_mb).toFixed(1)} МБ`;
+          const kill = document.createElement("button");
+          kill.className = "kill-button";
+          kill.type = "button";
+          kill.textContent = "⚔ УБИТЬ";
+          kill.setAttribute("aria-label", `Завершить ${process.name}, PID ${process.pid}`);
+          kill.addEventListener("click", () => killProcess(process, kill));
+          row.append(icon, name, pid, memory, kill);
+          list.appendChild(row);
+        });
+      } catch (error) {
+        list.innerHTML = '<div class="empty-state">Не удалось загрузить список процессов.</div>';
+        console.error("Ошибка списка процессов:", error);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function killProcess(process, button) {
+      const confirmed = window.confirm(
+        `Завершить процесс «${process.name}» (PID ${process.pid})?\n` +
+        "Несохранённые данные этого процесса могут быть потеряны."
+      );
+      if (!confirmed) return;
+
+      button.disabled = true;
+      button.textContent = "ЖДИТЕ...";
+      try {
+        const result = await window.pywebview.api.kill_process(
+          Number(process.pid),
+          Number(process.create_time)
+        );
+        if (result.success) {
+          button.textContent = "ГОТОВО";
+          button.title = result.message;
+          window.setTimeout(refreshProcesses, 450);
+        } else {
+          button.disabled = false;
+          button.textContent = "⚔ УБИТЬ";
+          window.alert(result.error || "Не удалось завершить процесс.");
+        }
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "⚔ УБИТЬ";
+        window.alert(`Ошибка завершения процесса: ${error}`);
+      }
+    }
+
+    async function flushRam() {
+      if (!bridgeReady) return;
+      const button = document.getElementById("flush-ram-button");
+      const status = document.getElementById("flush-ram-status");
+      const counter = document.getElementById("ram-value");
+      const meter = document.getElementById("ram-hp-meter");
+      const beforePercent = latestRam;
+      button.disabled = true;
+      status.textContent = "Зелье действует...";
+      counter.classList.remove("flush-pop");
+      meter.classList.remove("flush-pulse");
+      void counter.offsetWidth;
+
+      try {
+        const result = await window.pywebview.api.flush_ram();
+        if (!result.success) {
+          status.textContent = result.error || "Не удалось выполнить запрос.";
+          return;
+        }
+
+        counter.classList.add("flush-pop");
+        meter.classList.add("flush-pulse");
+        const trimmedMb = Number(result.trimmed_mb || 0).toFixed(2);
+        status.textContent =
+          `Запрос Windows выполнен для приложения · измеренное снижение: ${trimmedMb} МБ. ` +
+          "Это не очищает ОЗУ других программ.";
+
+        // Animate the system RAM reading from the previous value to the fresh sample.
+        await refreshStats();
+        animateRamCounter(beforePercent, latestRam);
+
+        window.setTimeout(() => {
+          counter.classList.remove("flush-pop");
+          meter.classList.remove("flush-pulse");
+        }, 2400);
+      } catch (error) {
+        status.textContent = `Ошибка зелья: ${error}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function animateRamCounter(startPercent, endPercent) {
+      const counter = document.getElementById("ram-value");
+      const duration = 900;
+      const startTime = performance.now();
+      const animate = (now) => {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - ((1 - progress) ** 3);
+        const current = startPercent + (endPercent - startPercent) * eased;
+        counter.textContent = `${current.toFixed(0)}%`;
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          counter.textContent = `${endPercent.toFixed(0)}%`;
+        }
+      };
+      requestAnimationFrame(animate);
+    }
+
+    function pushLogLine(message) {
+      const line = document.createElement("span");
+      line.className = "log-line";
+      if (/ошибка|не удалось|критическая/i.test(message)) line.classList.add("error");
+      if (/путь:/.test(message)) line.classList.add("path");
+      if (/итого освобождено/i.test(message)) line.classList.add("summary");
+      line.textContent = `[${new Date().toLocaleTimeString("ru-RU")}] ${message}`;
+      cleanupDisplayQueue.push(line);
+      if (!cleanupTyping) typeNextLogLine();
+    }
+
+    function typeNextLogLine() {
+      const log = document.getElementById("clean-log");
+      if (!cleanupDisplayQueue.length) {
+        cleanupTyping = false;
+        return;
+      }
+      cleanupTyping = true;
+      const line = cleanupDisplayQueue.shift();
+      log.appendChild(line);
+      log.appendChild(document.createTextNode("\n"));
+      log.scrollTop = log.scrollHeight;
+      window.setTimeout(typeNextLogLine, 24);
+    }
+
+    async function pollCleanup() {
+      if (!bridgeReady || cleanupPolling) return;
+      cleanupPolling = true;
+      try {
+        const update = await window.pywebview.api.get_clean_updates();
+        update.logs.forEach(pushLogLine);
+        if (!update.running) {
+          cleanupPolling = false;
+          if (update.result) {
+            pushLogLine(`Задача завершена. Всего байт: ${update.result.freed_bytes}.`);
+            const button = document.getElementById("clean-button");
+            button.disabled = false;
+            button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
+            setText("connection-state", "МИР АКТИВЕН");
+          }
+          return;
+        }
+      } catch (error) {
+        console.error("Ошибка получения лога очистки:", error);
+      }
+      cleanupPolling = false;
+      window.setTimeout(pollCleanup, 180);
+    }
+
+    async function startCleanup() {
+      if (!bridgeReady) return;
+      const cleanTemp = document.getElementById("clean-temp").checked;
+      const cleanBin = document.getElementById("clean-bin").checked;
+      if (!cleanTemp && !cleanBin) {
+        pushLogLine("Выбери хотя бы один тип очистки.");
+        return;
+      }
+      const button = document.getElementById("clean-button");
+      button.disabled = true;
+      button.textContent = "ВЗРЫВ ЗАПУЩЕН...";
+      pushLogLine("Подготовка к очистке...");
+      try {
+        const response = await window.pywebview.api.start_clean(cleanTemp, cleanBin);
+        if (!response.started) {
+          pushLogLine(response.error || "Не удалось начать очистку.");
+          button.disabled = false;
+          button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
+          return;
+        }
+        setText("connection-state", "ОЧИСТКА...");
+        pollCleanup();
+      } catch (error) {
+        pushLogLine(`Ошибка запуска очистки: ${error}`);
+        button.disabled = false;
+        button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
+      }
+    }
+
+    document.getElementById("refresh-processes").addEventListener("click", refreshProcesses);
+    document.getElementById("clean-button").addEventListener("click", startCleanup);
+    document.getElementById("flush-ram-button").addEventListener("click", flushRam);
+
+    window.addEventListener("pywebviewready", () => {
+      bridgeReady = true;
+      setText("connection-state", "МИР АКТИВЕН");
+      refreshStats();
+      refreshProcesses();
+      window.setInterval(refreshStats, 1000);
+      window.setInterval(pollCleanup, 500);
+    });
+
+    // Three.js block uses tiny CanvasTextures so each face looks like voxel art.
+    let voxelCube = null;
+    let voxelParticles = null;
+    let voxelRenderer = null;
+    let voxelScene = null;
+    let voxelCamera = null;
+    let voxelCpu = 0;
+    let pointerDown = false;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    function makePixelTexture(kind) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 16;
+      canvas.height = 16;
+      const context = canvas.getContext("2d");
+      const palettes = {
+        grass: ["#4b9b32", "#62b83e", "#39792d", "#77c346"],
+        soil: ["#865333", "#714329", "#986442", "#60402d"],
+        stone: ["#777777", "#686868", "#898989", "#595959"]
+      };
+      const colors = palettes[kind];
+      let seed = kind === "grass" ? 31 : kind === "soil" ? 71 : 101;
+      for (let y = 0; y < 16; y += 1) {
+        for (let x = 0; x < 16; x += 1) {
+          seed = (seed * 9301 + 49297) % 233280;
+          let color = colors[Math.floor((seed / 233280) * colors.length)];
+          if (kind === "grass" && y > 2 && x % 5 === 0 && y < 7) color = "#986442";
+          context.fillStyle = color;
+          context.fillRect(x, y, 1, 1);
+        }
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      return texture;
+    }
+
+    function makeParticles() {
+      const particleCount = 90;
+      const positions = new Float32Array(particleCount * 3);
+      for (let index = 0; index < particleCount; index += 1) {
+        positions[index * 3] = (Math.random() - 0.5) * 3.5;
+        positions[index * 3 + 1] = (Math.random() - 0.5) * 3.5;
+        positions[index * 3 + 2] = (Math.random() - 0.5) * 3.5;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0xff382b, size: 0.065, sizeAttenuation: false,
+        transparent: true, opacity: 0, depthWrite: false
+      });
+      voxelParticles = new THREE.Points(geometry, material);
+      voxelScene.add(voxelParticles);
+    }
+
+    function initVoxelWorld() {
+      const canvas = document.getElementById("world-canvas");
+      if (!window.THREE) {
+        setText("cube-tip", "Three.js не загружен. Проверь подключение к интернету.");
+        return;
+      }
+      voxelScene = new THREE.Scene();
+      voxelScene.background = new THREE.Color("#252b23");
+      voxelCamera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+      voxelCamera.position.set(3.6, 3.1, 4.5);
+      voxelCamera.lookAt(0, 0, 0);
+      voxelRenderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+      voxelRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      voxelRenderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+      voxelRenderer.outputEncoding = THREE.sRGBEncoding;
+      voxelScene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const sun = new THREE.DirectionalLight(0xfff0c2, 2.2);
+      sun.position.set(4, 6, 3);
+      voxelScene.add(sun);
+
+      const grass = makePixelTexture("grass");
+      const soil = makePixelTexture("soil");
+      const stone = makePixelTexture("stone");
+      const faceMaterials = [
+        new THREE.MeshLambertMaterial({ map: soil }),
+        new THREE.MeshLambertMaterial({ map: soil }),
+        new THREE.MeshLambertMaterial({ map: grass }),
+        new THREE.MeshLambertMaterial({ map: soil }),
+        new THREE.MeshLambertMaterial({ map: grass }),
+        new THREE.MeshLambertMaterial({ map: grass })
+      ];
+      const block = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.7, 1.7), faceMaterials);
+      voxelCube = new THREE.Group();
+      voxelCube.add(block);
+      voxelCube.position.y = 0.2;
+      voxelScene.add(voxelCube);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(8, 8),
+        new THREE.MeshLambertMaterial({ map: stone })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -1.12;
+      voxelScene.add(floor);
+      makeParticles();
+
+      const resize = () => {
+        const width = Math.max(canvas.clientWidth, 1);
+        const height = Math.max(canvas.clientHeight, 1);
+        voxelRenderer.setSize(width, height, false);
+        voxelCamera.aspect = width / height;
+        voxelCamera.updateProjectionMatrix();
+      };
+      new ResizeObserver(resize).observe(canvas);
+
+      canvas.addEventListener("pointerdown", (event) => {
+        pointerDown = true;
+        pointerX = event.clientX;
+        pointerY = event.clientY;
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointerup", () => { pointerDown = false; });
+      canvas.addEventListener("pointercancel", () => { pointerDown = false; });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!pointerDown || !voxelCube) return;
+        voxelCube.rotation.y += (event.clientX - pointerX) * 0.012;
+        voxelCube.rotation.x += (event.clientY - pointerY) * 0.012;
+        pointerX = event.clientX;
+        pointerY = event.clientY;
+      });
+      setText("cube-tip", "Земля + трава // скорость вращения связана с CPU");
+      animateVoxel();
+    }
+
+    function updateVoxelBlock(cpu, hot) {
+      voxelCpu = cpu;
+      if (voxelParticles) voxelParticles.material.opacity = hot ? 0.88 : 0;
+    }
+
+    function animateVoxel() {
+      if (!voxelRenderer || !voxelScene || !voxelCamera) return;
+      requestAnimationFrame(animateVoxel);
+      if (voxelCube) {
+        const speed = 0.0025 + (voxelCpu / 100) * 0.035;
+        voxelCube.rotation.y += speed;
+        voxelCube.rotation.x += speed * 0.42;
+      }
+      if (voxelParticles && voxelCpu > 85) {
+        voxelParticles.rotation.y += 0.006 + voxelCpu * 0.0001;
+        voxelParticles.rotation.x += 0.003;
+      }
+      voxelRenderer.render(voxelScene, voxelCamera);
+    }
+
+    initVoxelWorld();
+  </script>
+</body>
+</html>
