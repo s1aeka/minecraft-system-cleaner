@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#171717">
-  <title>MINECRAFT // SYSTEM OVERVIEW</title>
+  <title>MINECRAFT // SYSTEM HEALTH &amp; MONITOR</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
@@ -77,8 +77,8 @@
       width: 48px; height: 48px; display: grid; place-items: center;
       background: #427a2b; border: 3px solid #101010;
       box-shadow: inset 3px 3px #79b34a, inset -3px -3px #264c20;
-      font-size: 29px;
     }
+    .brand-icon svg { width: 34px; height: 34px; image-rendering: pixelated; }
     h1 {
       margin: 0; font: 12px/1.9 var(--pixel); letter-spacing: -1px;
       text-shadow: 2px 2px #111;
@@ -89,7 +89,10 @@
       background: #234421; box-shadow: inset 2px 2px #47703e, 3px 3px #101010;
       font: 8px/1.7 var(--pixel); white-space: nowrap;
     }
-    .status-chip::before { content: "■ "; color: #7cff55; }
+    .status-chip::before {
+      content: ""; display: inline-block; width: 7px; height: 7px;
+      margin-right: 6px; background: #7cff55; vertical-align: 1px;
+    }
 
     .tabs {
       display: flex; gap: 8px; border-bottom: 4px solid #101010;
@@ -127,6 +130,13 @@
     .metric-card { min-height: 133px; }
     .metric-head { display: flex; align-items: center; justify-content: space-between; }
     .metric-name { font: 9px/1.8 var(--pixel); color: #ddd; }
+    .metric-mark {
+      color: #a8d987; font: 8px/1 var(--pixel); letter-spacing: 1px;
+      border: 2px solid #111; padding: 4px; background: #263a24;
+      box-shadow: inset 1px 1px #557a43;
+    }
+    .metric-mark.hp-mark { color: #ff8179; background: #492321; box-shadow: inset 1px 1px #8a4d47; }
+    .metric-mark.xp-mark { color: #ffe16c; background: #493c1c; box-shadow: inset 1px 1px #897744; }
     .metric-value { margin: 13px 0 3px; font-size: 34px; line-height: 1; color: #fff; }
     .metric-detail { color: #bcbcbc; font-size: 20px; }
     .meter-caption { color: #aaa; font-size: 17px; margin: 7px 0 3px; }
@@ -200,7 +210,16 @@
     .resource-card .section-title { margin-bottom: 10px; }
     .bar-label { display: flex; justify-content: space-between; color: #eee; font-size: 20px; margin: 7px 0 2px; }
     .xp-meter .meter-cell { width: 13px; flex-basis: 13px; height: 13px; }
-    .hp-meter .meter-cell { width: 13px; flex-basis: 13px; height: 13px; }
+    .hp-meter .meter-cell {
+      width: 15px; flex-basis: 15px; height: 14px; border: 0;
+      clip-path: polygon(0 20%, 20% 20%, 20% 0, 40% 0, 40% 20%, 60% 20%,
+        60% 0, 80% 0, 80% 20%, 100% 20%, 100% 60%, 80% 60%, 80% 80%,
+        60% 80%, 60% 100%, 40% 100%, 40% 80%, 20% 80%, 20% 60%, 0 60%);
+      background: #493231;
+      box-shadow: none;
+      image-rendering: pixelated;
+    }
+    .hp-meter .meter-cell.on.red { background: #ed3f45; box-shadow: none; }
     .system-foot {
       display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
       margin-top: 13px; padding: 9px 12px; border: 2px solid #111;
@@ -219,7 +238,12 @@
       background: #353535; border: 2px solid #151515;
       box-shadow: inset 2px 2px #565656, inset -2px -2px #242424;
     }
-    .mob-icon { font-size: 24px; text-align: center; }
+    .process-header {
+      min-height: 34px; margin-bottom: 7px; color: #f0d775;
+      font: 7px/1.7 var(--pixel); background: #252525;
+    }
+    .mob-icon { display: grid; place-items: center; }
+    .mob-svg { width: 32px; height: 32px; image-rendering: pixelated; }
     .mob-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f2f2f2; }
     .mob-id, .mob-memory { color: #c4c4c4; text-align: right; }
     .mob-memory { color: #f1d870; }
@@ -233,6 +257,9 @@
       cursor: pointer;
     }
     .kill-button:hover { filter: brightness(1.2); }
+    .kill-button:focus-visible, .pixel-button:focus-visible, .tab-button:focus-visible {
+      outline: 2px solid #f3d45d; outline-offset: 3px;
+    }
     .kill-button:active { transform: translate(2px, 2px); box-shadow: inset 2px 2px #5d1715; }
     .kill-button:disabled { opacity: .55; cursor: wait; }
     .empty-state { padding: 30px; text-align: center; color: #bbb; }
@@ -257,12 +284,14 @@
       text-shadow: 1px 2px #111; font: 8px/1.8 var(--pixel);
       transition: transform .07s, box-shadow .07s, filter .07s;
     }
-    .pixel-button:hover { filter: brightness(1.13); }
+    .pixel-button:hover { filter: brightness(1.2); transform: translateY(-1px); }
     .pixel-button:active { transform: translate(3px, 3px); box-shadow: inset 3px 3px #333; }
     .pixel-button:disabled { opacity: .55; cursor: wait; }
     .tnt-button {
       position: relative; margin-top: auto; min-height: 88px;
-      background: repeating-linear-gradient(0deg, #d9362b 0 9px, #b32420 9px 12px);
+      background:
+        repeating-linear-gradient(90deg, transparent 0 12px, #f0eee3 12px 14px, transparent 14px 28px),
+        repeating-linear-gradient(0deg, #d9362b 0 9px, #b32420 9px 12px);
       box-shadow: inset 3px 3px #ff7767, inset -3px -3px #781713, 5px 5px #080808;
     }
     .tnt-label {
@@ -306,88 +335,95 @@
   <main class="shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-icon" aria-hidden="true">⛏</div>
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 16 16" role="presentation">
+            <path fill="#a9dc72" d="M1 2h5v2H4v2H2v2H0V5h1zm5 2h3v2H6zm3 2h3v2H9zm3 2h3v2h-3zM2 12h3v2H2zm3-2h3v2H5zm3-2h3v2H8zm3-2h3v2h-3z"/>
+          </svg>
+        </div>
         <div>
-          <h1>MINECRAFT // SYSTEM OVERVIEW</h1>
-          <div class="subtitle">Монитор мира: ваш компьютер</div>
+          <h1>MINECRAFT // SYSTEM HEALTH &amp; MONITOR</h1>
+          <div class="subtitle">System health at a glance</div>
         </div>
       </div>
-      <div class="status-chip" id="connection-state">ЗАГРУЗКА МИРА</div>
+      <div class="status-chip" id="connection-state">LOADING SYSTEM</div>
     </header>
 
-    <nav class="tabs" aria-label="Разделы">
-      <button class="tab-button active" data-page="dashboard">⚔️ СОСТОЯНИЕ ПК</button>
-      <button class="tab-button" data-page="processes">📜 МОБЫ / ПРОЦЕССЫ</button>
-      <button class="tab-button" data-page="cleanup">🧨 ДИНАМИТ / ОЧИСТКА</button>
+    <nav class="tabs" aria-label="Application sections">
+      <button class="tab-button active" data-page="dashboard">PC STATUS</button>
+      <button class="tab-button" data-page="processes">MOBS / PROCESSES</button>
+      <button class="tab-button" data-page="cleanup">TNT CLEANUP</button>
     </nav>
 
     <section class="page active" id="page-dashboard">
       <div class="metrics-grid">
         <article class="voxel-card metric-card" id="cpu-card">
-          <div class="metric-head"><span class="metric-name">ЦП / CPU</span><span>⚙</span></div>
+          <div class="metric-head"><span class="metric-name">CPU LOAD</span><span class="metric-mark" aria-hidden="true">CPU</span></div>
           <div class="metric-value" id="cpu-value">--%</div>
-          <div class="meter-caption">Нагрузка процессора</div>
-          <div class="meter" id="cpu-meter" aria-label="Загрузка CPU"></div>
+          <div class="meter-caption">Processor utilization</div>
+          <div class="meter" id="cpu-meter" aria-label="CPU load"></div>
         </article>
         <article class="voxel-card metric-card" id="ram-card">
-          <div class="metric-head"><span class="metric-name">ОЗУ / RAM</span><span>♥</span></div>
+          <div class="metric-head"><span class="metric-name">PLAYER RAM</span><span class="metric-mark hp-mark" aria-hidden="true">HP</span></div>
           <div class="metric-value" id="ram-value">--%</div>
-          <div class="meter-caption" id="ram-detail">Память игрока</div>
-          <div class="meter hp-meter" id="ram-meter" aria-label="Использование RAM"></div>
+          <div class="meter-caption" id="ram-detail">Player memory</div>
+          <div class="meter hp-meter" id="ram-meter" aria-label="RAM usage"></div>
         </article>
         <article class="voxel-card metric-card" id="disk-card">
-          <div class="metric-head"><span class="metric-name">МИР / ДИСК C:</span><span>▣</span></div>
-          <div class="metric-value" id="disk-value">-- ГБ свободно</div>
-          <div class="meter-caption" id="disk-detail">Загрузка чанка...</div>
-          <div class="meter xp-meter" id="disk-meter" aria-label="Использование диска"></div>
+          <div class="metric-head"><span class="metric-name">WORLD STORAGE (DISK C:)</span><span class="metric-mark xp-mark" aria-hidden="true">XP</span></div>
+          <div class="metric-value" id="disk-value">-- GB free</div>
+          <div class="meter-caption" id="disk-detail">Loading storage data...</div>
+          <div class="meter xp-meter" id="disk-meter" aria-label="Disk usage"></div>
         </article>
       </div>
       <div class="potion-row">
-        <button class="pixel-button potion-button" id="flush-ram-button">🧪 ЗЕЛЬЕ УСКОРЕНИЯ (ОЧИСТКА ОЗУ)</button>
-        <span class="mini-note" id="flush-ram-status">Сокращает working set только этого приложения.</span>
+        <button class="pixel-button potion-button" id="flush-ram-button">SPEED POTION / FLUSH RAM</button>
+        <span class="mini-note" id="flush-ram-status">Requests a working-set trim for this application only.</span>
       </div>
 
       <div class="world-layout">
         <article class="voxel-card world-card" id="world-card">
-          <div class="world-heading">БЛОК НАГРУЗКИ // DRAG TO ROTATE</div>
+          <div class="world-heading">CPU LOAD VOXEL // DRAG TO ROTATE</div>
           <div id="high-load-overlay"></div>
-          <canvas id="world-canvas" aria-label="Вращающийся 3D блок травы"></canvas>
-          <div class="world-tip" id="cube-tip">Загрузка 3D мира...</div>
+          <canvas id="world-canvas" aria-label="Rotating 3D grass block"></canvas>
+          <div class="world-tip" id="cube-tip">Loading 3D world...</div>
         </article>
         <div class="right-stack">
           <article class="voxel-card resource-card">
-            <h2 class="section-title">♥ HP // ПАМЯТЬ</h2>
-            <div class="bar-label"><span>RAM игрока</span><strong id="ram-hp-text">--%</strong></div>
+            <h2 class="section-title">HP // PLAYER RAM</h2>
+            <div class="bar-label"><span>RAM usage</span><strong id="ram-hp-text">--%</strong></div>
             <div class="meter hp-meter" id="ram-hp-meter"></div>
-            <div class="mini-note" id="ram-size">Ожидание данных...</div>
+            <div class="mini-note" id="ram-size">Waiting for data...</div>
           </article>
           <article class="voxel-card resource-card">
-            <h2 class="section-title">✦ XP // ХРАНИЛИЩЕ</h2>
-            <div class="bar-label"><span>Диск C:</span><strong id="disk-xp-text">--%</strong></div>
+            <h2 class="section-title">XP // WORLD STORAGE</h2>
+            <div class="bar-label"><span>Disk C:</span><strong id="disk-xp-text">--%</strong></div>
             <div class="meter xp-meter" id="disk-xp-meter"></div>
-            <div class="mini-note" id="battery-status">Батарея: проверка...</div>
+            <div class="mini-note" id="battery-status">Battery: checking...</div>
           </article>
           <article class="voxel-card resource-card">
-            <h2 class="section-title">МИРОВОЙ СТАТУС</h2>
-            <div class="mini-note" id="world-status">Загрузка показателей...</div>
+            <h2 class="section-title">SYSTEM STATUS</h2>
+            <div class="mini-note" id="world-status">Loading system metrics...</div>
           </article>
         </div>
       </div>
       <div class="system-foot">
-        <span>Автообновление: <b>1 сек</b></span>
-        <span>История CPU/RAM: <b>30 тиков</b></span>
-        <span id="last-update">Последний тик: --:--:--</span>
+        <span>Auto-refresh: <b>1 sec</b></span>
+        <span>CPU/RAM history: <b>30 ticks</b></span>
+        <span id="last-update">Last update: --:--:--</span>
       </div>
     </section>
 
     <section class="page" id="page-processes">
       <div class="process-toolbar">
-        <h2 class="section-title">📜 МОБЫ, ПОТРЕБЛЯЮЩИЕ РЕСУРСЫ</h2>
-        <button class="pixel-button" id="refresh-processes">🔄 ОБНОВИТЬ СПИСОК</button>
+        <h2 class="section-title">RESOURCE-CONSUMING MOBS</h2>
+        <button class="pixel-button" id="refresh-processes">REFRESH MOBS</button>
       </div>
       <article class="voxel-card">
+        <div class="process-row process-header" aria-hidden="true">
+          <span></span><span>PROCESS</span><span>PID</span><span>MEMORY USED</span><span></span>
+        </div>
         <div class="process-list" id="process-list">
-          <div class="empty-state">Сканирование мира...</div>
+          <div class="empty-state">Scanning processes...</div>
         </div>
       </article>
     </section>
@@ -395,28 +431,28 @@
     <section class="page" id="page-cleanup">
       <div class="cleanup-layout">
         <section class="voxel-card cleanup-options">
-          <h2 class="section-title">🧰 ВЫБЕРИ ДЕЙСТВИЕ</h2>
+          <h2 class="section-title">PURGE SYSTEM</h2>
           <label class="switch-row">
             <input id="clean-temp" type="checkbox" checked>
-            <span class="switch-label">Временные файлы<br><small>Temp-папки игрока и системы</small></span>
+            <span class="switch-label">TEMPORARY FILES<br><small>User and Windows Temp folders</small></span>
           </label>
           <label class="switch-row">
             <input id="clean-bin" type="checkbox">
-            <span class="switch-label">Очистить Корзину<br><small>Удалить предметы навсегда</small></span>
+            <span class="switch-label">RECYCLE BIN<br><small>Permanently remove its contents</small></span>
           </label>
-          <div class="warning">Внимание: очистка удаляет файлы. Заблокированные системой файлы будут пропущены.</div>
+          <div class="warning">Warning: cleanup permanently deletes files. Files locked by the system will be skipped.</div>
           <button class="pixel-button tnt-button" id="clean-button">
-            <span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ
+            <span class="tnt-label">TNT</span><br>PURGE SYSTEM
           </button>
         </section>
         <section class="voxel-card log-panel">
-          <h2 class="section-title">📟 ЛОГ ПРИКЛЮЧЕНИЯ</h2>
-          <div id="clean-log" role="log" aria-live="polite"><span class="log-line">[СИСТЕМА] Жду команду игрока<span class="blink">_</span></span></div>
+          <h2 class="section-title">ADVENTURE LOG</h2>
+          <div id="clean-log" role="log" aria-live="polite"><span class="log-line">[SYSTEM] Awaiting cleanup command<span class="blink">_</span></span></div>
         </section>
       </div>
     </section>
 
-    <footer class="footer">PIXEL SYSTEM CONSOLE // МОНИТОРИНГ И ОБСЛУЖИВАНИЕ ПК</footer>
+    <footer class="footer">PIXEL SYSTEM CONSOLE // PC HEALTH &amp; MAINTENANCE</footer>
   </main>
 
   <script>
@@ -480,14 +516,14 @@
         const usedGb = (stats.ram_used / (1024 ** 3)).toFixed(1);
         const totalGb = (stats.ram_total / (1024 ** 3)).toFixed(1);
         setText("ram-value", `${latestRam.toFixed(0)}%`);
-        setText("ram-detail", `${usedGb} / ${totalGb} ГБ`);
+        setText("ram-detail", `${usedGb} / ${totalGb} GB`);
         setText("ram-hp-text", `${latestRam.toFixed(0)}%`);
-        setText("ram-size", `Используется ${usedGb} из ${totalGb} ГБ`);
+        setText("ram-size", `${usedGb} of ${totalGb} GB in use`);
         drawMeter("ram-meter", latestRam, "red");
         drawMeter("ram-hp-meter", latestRam, "red");
       } else if (stats.ram_error) {
         setText("ram-value", "ERR");
-        setText("ram-size", `Ошибка ОЗУ: ${stats.ram_error}`);
+        setText("ram-size", `RAM error: ${stats.ram_error}`);
       }
 
       if (Number.isFinite(stats.disk_percent)) {
@@ -495,30 +531,30 @@
         const usedGb = (stats.disk_used / (1024 ** 3)).toFixed(1);
         const freeGb = (stats.disk_free / (1024 ** 3)).toFixed(1);
         const totalGb = (stats.disk_total / (1024 ** 3)).toFixed(1);
-        setText("disk-value", `${freeGb} ГБ свободно`);
-        setText("disk-detail", `Занято ${usedGb} из ${totalGb} ГБ`);
+        setText("disk-value", `${freeGb} GB free`);
+        setText("disk-detail", `${usedGb} of ${totalGb} GB used`);
         setText("disk-xp-text", `${latestDisk.toFixed(0)}%`);
         drawMeter("disk-meter", latestDisk, "gold");
         drawMeter("disk-xp-meter", latestDisk, "gold");
       } else if (stats.disk_error) {
         setText("disk-value", "ERR");
-        setText("disk-detail", `Ошибка диска: ${stats.disk_error}`);
+        setText("disk-detail", `Disk error: ${stats.disk_error}`);
       }
 
       const battery = stats.battery;
       if (battery) {
-        const power = battery.power_plugged ? "заряжается" : "работает от батареи";
-        setText("battery-status", `Батарея: ${battery.percent}% · ${power}`);
+        const power = battery.power_plugged ? "plugged in" : "on battery";
+        setText("battery-status", `Battery: ${battery.percent}% - ${power}`);
       } else if (stats.battery_error) {
-        setText("battery-status", `Батарея: ${stats.battery_error}`);
+        setText("battery-status", `Battery error: ${stats.battery_error}`);
       } else {
-        setText("battery-status", "Батарея: не обнаружена");
+        setText("battery-status", "Battery not detected");
       }
 
       const hot = latestCpu > 85 || latestRam > 85;
       document.getElementById("world-card").classList.toggle("hot", hot);
-      setText("world-status", hot ? "⚠ Высокая нагрузка! Мир перегрет." : "Мир загружен. Система в норме.");
-      setText("last-update", `Последний тик: ${new Date().toLocaleTimeString("ru-RU")}`);
+      setText("world-status", hot ? "High system load detected." : "System is running normally.");
+      setText("last-update", `Last update: ${new Date().toLocaleTimeString("en-US")}`);
       updateVoxelBlock(latestCpu, hot);
     }
 
@@ -528,9 +564,60 @@
         const stats = await window.pywebview.api.get_stats();
         renderStats(stats);
       } catch (error) {
-        setText("connection-state", "ОШИБКА API");
-        console.error("Не удалось получить метрики:", error);
+        setText("connection-state", "API ERROR");
+        console.error("Could not retrieve system metrics:", error);
       }
+    }
+
+    function createMobIcon(index) {
+      const mobs = [
+        {
+          name: "Creeper",
+          colors: { G: "#59a83b", L: "#8acb52", D: "#34752d", K: "#18251b" },
+          pixels: ["..GGGG..", ".GLLLLG.", ".GLKKLG.", ".GLLLLG.", ".G.KK.G.", "..GKKG..", "..G..G..", "..G..G.."]
+        },
+        {
+          name: "Zombie",
+          colors: { G: "#4b9850", L: "#87bd65", S: "#a77a5b", B: "#345da0", K: "#263020" },
+          pixels: ["..SSSS..", ".SLLLLS.", ".SLKKLS.", ".SSSSSS.", "..GGGG..", ".GGGGGG.", ".BB..BB.", ".BB..BB."]
+        },
+        {
+          name: "Enderman",
+          colors: { D: "#20202b", K: "#111119", P: "#e75bce", V: "#a48be8" },
+          pixels: ["..DDDD..", ".DDDDDD.", ".DPPPPD.", ".DDDDDD.", "..DDDD..", "..DDDD..", "..D..D..", "..D..D.."]
+        },
+        {
+          name: "Skeleton",
+          colors: { B: "#d8d4bc", L: "#f1edda", D: "#979487", K: "#282824" },
+          pixels: ["..BBBB..", ".BLLLLB.", ".BLKKLB.", ".BLLLLB.", "..BBBB..", "...DD...", "..D..D..", "..D..D.."]
+        },
+        {
+          name: "Spider",
+          colors: { D: "#29242c", R: "#b83234", K: "#17151a", L: "#693743" },
+          pixels: ["D......D", ".D....D.", "..DDDD..", ".DRKKRD.", "DDRKKRDD", "..DLLD..", ".D....D.", "D......D"]
+        }
+      ];
+      const mob = mobs[index % mobs.length];
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 8 8");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", mob.name);
+      svg.classList.add("mob-svg");
+
+      mob.pixels.forEach((row, y) => {
+        [...row].forEach((pixel, x) => {
+          const fill = mob.colors[pixel];
+          if (!fill) return;
+          const block = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          block.setAttribute("x", String(x));
+          block.setAttribute("y", String(y));
+          block.setAttribute("width", "1");
+          block.setAttribute("height", "1");
+          block.setAttribute("fill", fill);
+          svg.appendChild(block);
+        });
+      });
+      return svg;
     }
 
     async function refreshProcesses() {
@@ -538,12 +625,12 @@
       const button = document.getElementById("refresh-processes");
       const list = document.getElementById("process-list");
       button.disabled = true;
-      list.innerHTML = '<div class="empty-state">Сканирование мобов...</div>';
+      list.innerHTML = '<div class="empty-state">Scanning processes...</div>';
       try {
         const processes = await window.pywebview.api.get_processes();
         list.replaceChildren();
         if (!processes.length) {
-          list.innerHTML = '<div class="empty-state">Процессы не найдены.</div>';
+          list.innerHTML = '<div class="empty-state">No processes found.</div>';
           return;
         }
         processes.forEach((process, index) => {
@@ -551,7 +638,7 @@
           row.className = "process-row";
           const icon = document.createElement("span");
           icon.className = "mob-icon";
-          icon.textContent = ["🧟", "🐷", "🕷️", "🐺", "🐸"][index % 5];
+          icon.appendChild(createMobIcon(index));
           const name = document.createElement("span");
           name.className = "mob-name";
           name.textContent = process.name;
@@ -561,19 +648,19 @@
           pid.textContent = `#${process.pid}`;
           const memory = document.createElement("span");
           memory.className = "mob-memory";
-          memory.textContent = `${Number(process.memory_mb).toFixed(1)} МБ`;
+          memory.textContent = `${Number(process.memory_mb).toFixed(1)} MB`;
           const kill = document.createElement("button");
           kill.className = "kill-button";
           kill.type = "button";
-          kill.textContent = "⚔ УБИТЬ";
-          kill.setAttribute("aria-label", `Завершить ${process.name}, PID ${process.pid}`);
+          kill.textContent = "KILL PROCESS";
+          kill.setAttribute("aria-label", `Terminate ${process.name}, PID ${process.pid}`);
           kill.addEventListener("click", () => killProcess(process, kill));
           row.append(icon, name, pid, memory, kill);
           list.appendChild(row);
         });
       } catch (error) {
-        list.innerHTML = '<div class="empty-state">Не удалось загрузить список процессов.</div>';
-        console.error("Ошибка списка процессов:", error);
+        list.innerHTML = '<div class="empty-state">Could not load the process list.</div>';
+        console.error("Process list error:", error);
       } finally {
         button.disabled = false;
       }
@@ -581,31 +668,31 @@
 
     async function killProcess(process, button) {
       const confirmed = window.confirm(
-        `Завершить процесс «${process.name}» (PID ${process.pid})?\n` +
-        "Несохранённые данные этого процесса могут быть потеряны."
+        `Terminate process "${process.name}" (PID ${process.pid})?\n` +
+        "Unsaved data belonging to this process may be lost."
       );
       if (!confirmed) return;
 
       button.disabled = true;
-      button.textContent = "ЖДИТЕ...";
+      button.textContent = "TERMINATING...";
       try {
         const result = await window.pywebview.api.kill_process(
           Number(process.pid),
           Number(process.create_time)
         );
         if (result.success) {
-          button.textContent = "ГОТОВО";
+          button.textContent = "TERMINATED";
           button.title = result.message;
           window.setTimeout(refreshProcesses, 450);
         } else {
           button.disabled = false;
-          button.textContent = "⚔ УБИТЬ";
-          window.alert(result.error || "Не удалось завершить процесс.");
+          button.textContent = "KILL PROCESS";
+          window.alert(result.error || "Could not terminate the process.");
         }
       } catch (error) {
         button.disabled = false;
-        button.textContent = "⚔ УБИТЬ";
-        window.alert(`Ошибка завершения процесса: ${error}`);
+        button.textContent = "KILL PROCESS";
+        window.alert(`Process termination error: ${error}`);
       }
     }
 
@@ -617,7 +704,7 @@
       const meter = document.getElementById("ram-hp-meter");
       const beforePercent = latestRam;
       button.disabled = true;
-      status.textContent = "Зелье действует...";
+      status.textContent = "Applying working-set trim...";
       counter.classList.remove("flush-pop");
       meter.classList.remove("flush-pulse");
       void counter.offsetWidth;
@@ -625,16 +712,13 @@
       try {
         const result = await window.pywebview.api.flush_ram();
         if (!result.success) {
-          status.textContent = result.error || "Не удалось выполнить запрос.";
+          status.textContent = result.error || "The working-set trim request failed.";
           return;
         }
 
         counter.classList.add("flush-pop");
         meter.classList.add("flush-pulse");
-        const trimmedMb = Number(result.trimmed_mb || 0).toFixed(2);
-        status.textContent =
-          `Запрос Windows выполнен для приложения · измеренное снижение: ${trimmedMb} МБ. ` +
-          "Это не очищает ОЗУ других программ.";
+        status.textContent = result.message;
 
         // Animate the system RAM reading from the previous value to the fresh sample.
         await refreshStats();
@@ -645,7 +729,7 @@
           meter.classList.remove("flush-pulse");
         }, 2400);
       } catch (error) {
-        status.textContent = `Ошибка зелья: ${error}`;
+        status.textContent = `Working-set trim error: ${error}`;
       } finally {
         button.disabled = false;
       }
@@ -672,10 +756,10 @@
     function pushLogLine(message) {
       const line = document.createElement("span");
       line.className = "log-line";
-      if (/ошибка|не удалось|критическая/i.test(message)) line.classList.add("error");
-      if (/путь:/.test(message)) line.classList.add("path");
-      if (/итого освобождено/i.test(message)) line.classList.add("summary");
-      line.textContent = `[${new Date().toLocaleTimeString("ru-RU")}] ${message}`;
+      if (/error|could not|critical/i.test(message)) line.classList.add("error");
+      if (/path:/i.test(message)) line.classList.add("path");
+      if (/total space freed/i.test(message)) line.classList.add("summary");
+      line.textContent = `[${new Date().toLocaleTimeString("en-US")}] ${message}`;
       cleanupDisplayQueue.push(line);
       if (!cleanupTyping) typeNextLogLine();
     }
@@ -703,16 +787,16 @@
         if (!update.running) {
           cleanupPolling = false;
           if (update.result) {
-            pushLogLine(`Задача завершена. Всего байт: ${update.result.freed_bytes}.`);
+            pushLogLine(`Cleanup complete. Total bytes freed: ${update.result.freed_bytes}.`);
             const button = document.getElementById("clean-button");
             button.disabled = false;
-            button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
-            setText("connection-state", "МИР АКТИВЕН");
+            button.innerHTML = '<span class="tnt-label">TNT</span><br>PURGE SYSTEM';
+            setText("connection-state", "SYSTEM ONLINE");
           }
           return;
         }
       } catch (error) {
-        console.error("Ошибка получения лога очистки:", error);
+        console.error("Could not retrieve cleanup log:", error);
       }
       cleanupPolling = false;
       window.setTimeout(pollCleanup, 180);
@@ -723,27 +807,27 @@
       const cleanTemp = document.getElementById("clean-temp").checked;
       const cleanBin = document.getElementById("clean-bin").checked;
       if (!cleanTemp && !cleanBin) {
-        pushLogLine("Выбери хотя бы один тип очистки.");
+        pushLogLine("Select at least one cleanup option.");
         return;
       }
       const button = document.getElementById("clean-button");
       button.disabled = true;
-      button.textContent = "ВЗРЫВ ЗАПУЩЕН...";
-      pushLogLine("Подготовка к очистке...");
+      button.textContent = "PURGE IN PROGRESS...";
+      pushLogLine("Preparing system cleanup...");
       try {
         const response = await window.pywebview.api.start_clean(cleanTemp, cleanBin);
         if (!response.started) {
-          pushLogLine(response.error || "Не удалось начать очистку.");
+          pushLogLine(response.error || "Could not start cleanup.");
           button.disabled = false;
-          button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
+          button.innerHTML = '<span class="tnt-label">TNT</span><br>PURGE SYSTEM';
           return;
         }
-        setText("connection-state", "ОЧИСТКА...");
+        setText("connection-state", "CLEANUP IN PROGRESS");
         pollCleanup();
       } catch (error) {
-        pushLogLine(`Ошибка запуска очистки: ${error}`);
+        pushLogLine(`Cleanup start error: ${error}`);
         button.disabled = false;
-        button.innerHTML = '<span class="tnt-label">TNT</span><br>ЗАПУСТИТЬ ОЧИСТКУ';
+        button.innerHTML = '<span class="tnt-label">TNT</span><br>PURGE SYSTEM';
       }
     }
 
@@ -753,7 +837,7 @@
 
     window.addEventListener("pywebviewready", () => {
       bridgeReady = true;
-      setText("connection-state", "МИР АКТИВЕН");
+      setText("connection-state", "SYSTEM ONLINE");
       refreshStats();
       refreshProcesses();
       window.setInterval(refreshStats, 1000);
@@ -820,7 +904,7 @@
     function initVoxelWorld() {
       const canvas = document.getElementById("world-canvas");
       if (!window.THREE) {
-        setText("cube-tip", "Three.js не загружен. Проверь подключение к интернету.");
+        setText("cube-tip", "Three.js could not load. Check your internet connection.");
         return;
       }
       voxelScene = new THREE.Scene();
@@ -887,7 +971,7 @@
         pointerX = event.clientX;
         pointerY = event.clientY;
       });
-      setText("cube-tip", "Земля + трава // скорость вращения связана с CPU");
+      setText("cube-tip", "Grass/Dirt Voxel Block // Rotation linked to CPU load");
       animateVoxel();
     }
 

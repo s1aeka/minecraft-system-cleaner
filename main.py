@@ -94,7 +94,7 @@ class SystemAPI:
                     continue
                 processes.append(
                     {
-                        "name": info.get("name") or "Неизвестный процесс",
+                        "name": info.get("name") or "Unknown process",
                         "pid": process.pid,
                         "memory_bytes": memory_info.rss,
                         "memory_mb": round(memory_info.rss / BYTES_PER_MB, 1),
@@ -115,17 +115,17 @@ class SystemAPI:
     ) -> dict[str, Any]:
         """Terminate the selected process, refusing invalid, stale IDs and this app."""
         if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
-            return {"success": False, "error": "Некорректный PID процесса."}
+            return {"success": False, "error": "Invalid process ID (PID)."}
         if expected_create_time is not None and (
             isinstance(expected_create_time, bool)
             or not isinstance(expected_create_time, (int, float))
             or not math.isfinite(expected_create_time)
         ):
-            return {"success": False, "error": "Некорректный идентификатор процесса."}
+            return {"success": False, "error": "Invalid process creation timestamp."}
         if pid == os.getpid():
             return {
                 "success": False,
-                "error": "Нельзя завершить процесс самого приложения.",
+                "error": "The application cannot terminate its own process.",
             }
 
         try:
@@ -137,8 +137,8 @@ class SystemAPI:
                     return {
                         "success": False,
                         "error": (
-                            f"PID {pid} теперь принадлежит другому процессу. "
-                            "Обновите список процессов."
+                            f"PID {pid} now belongs to a different process. "
+                            "Refresh the process list and try again."
                         ),
                     }
             process.kill()
@@ -146,30 +146,32 @@ class SystemAPI:
                 "success": True,
                 "pid": pid,
                 "name": process_name,
-                "message": f"Процесс {process_name} (PID {pid}) завершен.",
+                "message": (
+                    f"Process terminated successfully: {process_name} (PID {pid})."
+                ),
             }
         except psutil.NoSuchProcess:
             return {
                 "success": False,
-                "error": f"Процесс с PID {pid} уже завершен или не существует.",
+                "error": f"Process with PID {pid} has already exited or does not exist.",
             }
         except psutil.AccessDenied:
             return {
                 "success": False,
                 "error": (
-                    f"Недостаточно прав для завершения процесса PID {pid}. "
-                    "Некоторым системным процессам требуются права администратора."
+                    f"Access denied while terminating PID {pid}. "
+                    "Some system processes require administrator privileges."
                 ),
             }
         except psutil.Error as error:
             return {
                 "success": False,
-                "error": f"Не удалось завершить процесс PID {pid}: {error}",
+                "error": f"Could not terminate process PID {pid}: {error}",
             }
         except OSError as error:
             return {
                 "success": False,
-                "error": f"Ошибка Windows при завершении PID {pid}: {error}",
+                "error": f"Windows error while terminating PID {pid}: {error}",
             }
 
     def flush_ram(self) -> dict[str, Any]:
@@ -213,14 +215,18 @@ class SystemAPI:
                 "trimmed_bytes": trimmed_bytes,
                 "trimmed_mb": round(trimmed_bytes / BYTES_PER_MB, 2),
                 "message": (
-                    "Windows получил запрос сократить working set приложения. "
-                    "Это не очищает ОЗУ других программ."
+                    "Windows accepted a request to trim this application's working "
+                    f"set. Resident memory changed from "
+                    f"{before_bytes / BYTES_PER_MB:.2f} MB to "
+                    f"{after_bytes / BYTES_PER_MB:.2f} MB "
+                    f"(measured decrease: {trimmed_bytes / BYTES_PER_MB:.2f} MB). "
+                    "This does not clear RAM used by other applications."
                 ),
             }
         except (OSError, psutil.Error, AttributeError) as error:
             return {
                 "success": False,
-                "error": f"Не удалось сократить working set: {error}",
+                "error": f"Could not trim this application's working set: {error}",
             }
 
     def start_clean(
@@ -228,10 +234,13 @@ class SystemAPI:
     ) -> dict[str, Any]:
         """Start a cleanup worker so the WebView remains responsive."""
         if not clean_temp and not clean_recycle_bin:
-            return {"started": False, "error": "Выберите хотя бы один вид очистки."}
+            return {
+                "started": False,
+                "error": "Select at least one cleanup option.",
+            }
         with self._clean_lock:
             if self._clean_running:
-                return {"started": False, "error": "Очистка уже выполняется."}
+                return {"started": False, "error": "Cleanup is already running."}
             self._drain_pending_logs()
             self._clean_result = None
             self._clean_running = True
@@ -254,12 +263,12 @@ class SystemAPI:
         if clean_temp:
             temp_paths = self._get_temp_paths()
             for path in temp_paths:
-                self._emit_log(f"Сканируемый путь: {path}")
+                self._emit_log(f"Scanning path: {path}")
             for path in temp_paths:
                 try:
                     total_freed += self._clean_temp_directory(path, self._emit_log)
                 except (PermissionError, OSError) as error:
-                    message = f"Не удалось обработать папку {path}: {error}"
+                    message = f"Could not process folder {path}: {error}"
                     errors.append(message)
                     self._emit_log(message)
 
@@ -275,18 +284,19 @@ class SystemAPI:
                 shell32.SHEmptyRecycleBinW.restype = ctypes.c_long
                 result = shell32.SHEmptyRecycleBinW(None, None, 7)
                 if result != 0:
-                    raise OSError(result, "SHEmptyRecycleBinW завершился с ошибкой.")
+                    raise OSError(result, "SHEmptyRecycleBinW failed.")
 
                 size_after = self._query_recycle_bin_size()
                 if size_before is not None and size_after is not None:
                     total_freed += max(0, size_before - size_after)
-                    self._emit_log("Корзина очищена.")
+                    self._emit_log("Recycle Bin cleared.")
                 else:
                     self._emit_log(
-                        "Корзина очищена; размер удаленных данных измерить не удалось."
+                        "Recycle Bin cleared; the amount of data removed could not "
+                        "be measured."
                     )
             except (OSError, AttributeError) as error:
-                message = f"Ошибка очистки Корзины: {error}"
+                message = f"Could not empty the Recycle Bin: {error}"
                 errors.append(message)
                 self._emit_log(message)
 
@@ -297,8 +307,9 @@ class SystemAPI:
             "errors": errors,
         }
         self._emit_log(
-            "Итого освобождено: "
-            f"{self._format_size(total_freed)} ({total_freed / BYTES_PER_MB:.2f} МБ)."
+            "Total space freed: "
+            f"{self._format_size(total_freed)} "
+            f"({total_freed / BYTES_PER_MB:.2f} MB)."
         )
         return result
 
@@ -317,7 +328,7 @@ class SystemAPI:
         try:
             result = self.clean_system(clean_temp, clean_recycle_bin)
         except Exception as error:
-            self._emit_log(f"Критическая ошибка очистки: {error}")
+            self._emit_log(f"Critical cleanup error: {error}")
             result = {
                 "freed_bytes": 0,
                 "freed_mb": 0,
@@ -362,14 +373,14 @@ class SystemAPI:
     def _clean_temp_directory(path: str, log: Callable[[str], None]) -> int:
         """Remove accessible files and emptied subdirectories, but not the root."""
         if not os.path.isdir(path):
-            log(f"Папка недоступна или не существует: {path}")
+            log(f"Folder is unavailable or does not exist: {path}")
             return 0
 
         freed_bytes = 0
 
         def on_walk_error(error: OSError) -> None:
             log(
-                "Пропущен (заблокирован): "
+                "Skipped (in use or access denied): "
                 f"{getattr(error, 'filename', None) or path}"
             )
 
@@ -383,25 +394,25 @@ class SystemAPI:
                     file_size = os.path.getsize(file_path)
                     os.remove(file_path)
                     freed_bytes += file_size
-                    log(f"Удален файл: {file_path}")
+                    log(f"Deleted file: {file_path}")
                 except (PermissionError, OSError):
-                    log(f"Пропущен (заблокирован): {file_path}")
+                    log(f"Skipped (in use or access denied): {file_path}")
 
             for directory in directories:
                 directory_path = os.path.join(root, directory)
                 try:
                     if os.path.islink(directory_path):
                         os.remove(directory_path)
-                        log(f"Удалена ссылка: {directory_path}")
+                        log(f"Removed symbolic link: {directory_path}")
                     elif not os.path.exists(directory_path):
                         continue
                     elif os.path.isdir(directory_path) and not os.listdir(directory_path):
                         shutil.rmtree(directory_path)
-                        log(f"Удалена папка: {directory_path}")
+                        log(f"Removed empty folder: {directory_path}")
                     else:
-                        log(f"Пропущена непустая папка: {directory_path}")
+                        log(f"Skipped non-empty folder: {directory_path}")
                 except (PermissionError, OSError):
-                    log(f"Пропущен (заблокирован): {directory_path}")
+                    log(f"Skipped (in use or access denied): {directory_path}")
 
         return freed_bytes
 
@@ -425,8 +436,8 @@ class SystemAPI:
     @staticmethod
     def _format_size(size: int) -> str:
         if size >= BYTES_PER_GB:
-            return f"{size / BYTES_PER_GB:.2f} ГБ"
-        return f"{size / BYTES_PER_MB:.2f} МБ"
+            return f"{size / BYTES_PER_GB:.2f} GB"
+        return f"{size / BYTES_PER_MB:.2f} MB"
 
 
 def main() -> None:
@@ -434,7 +445,7 @@ def main() -> None:
     api = SystemAPI()
     html_path = Path(__file__).with_name("index.html").resolve()
     window = webview.create_window(
-        "MINECRAFT // SYSTEM OVERVIEW",
+        "MINECRAFT // SYSTEM HEALTH & MONITOR",
         html_path.as_uri(),
         js_api=api,
         width=1180,
